@@ -13,9 +13,9 @@
 ActiveRecord::Schema.define(version: 20200122141953) do
 
   create_table "matches", force: :cascade do |t|
-    t.integer "away_id"
-    t.integer "home_id"
-    t.string  "result"
+    t.string "blue_id"
+    t.string "red_id"
+    t.string "result"
   end
 
   create_table "players", force: :cascade do |t|

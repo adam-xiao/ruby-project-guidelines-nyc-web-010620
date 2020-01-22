@@ -1,5 +1,4 @@
 require_relative '../../config/environment'
-require_relative '../../bin/run.rb'
 require 'pp'
 
 class Player < ActiveRecord::Base
