@@ -1,6 +1,10 @@
 class Team < ActiveRecord::Base
-    has_many :games
-    has_many :teams, through: :matches
+    has_many :away_games, foreign_key: :match_id, class_name: "match"
+    has_many :home_games, through: :away_games
+
+    has_many :home_games, foreign_key :match_id, class_name: "match"
+    has_many :away_games, through: :home_games
+
 
     def self.team_maker
         Team.create

@@ -10,16 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20200122143407) do
-
-  create_table "games", force: :cascade do |t|
-    t.integer "duration_minutes"
-    t.float   "efficiency_difference"
-  end
+ActiveRecord::Schema.define(version: 20200122141953) do
 
   create_table "matches", force: :cascade do |t|
-    t.integer "team1_id"
-    t.integer "team2_id"
+    t.integer "away_id"
+    t.integer "home_id"
     t.string  "result"
   end
 
