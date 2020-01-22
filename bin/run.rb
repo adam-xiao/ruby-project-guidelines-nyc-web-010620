@@ -1,5 +1,10 @@
 require_relative '../config/environment'
 
+require 'pry'
+require 'rest-client'
+require 'tty-prompt'
+
+prompt =  TTY::Prompt.new
 
 
-puts "HELLO WORLD"
+system("#{ENV["API_KEY"]}")
