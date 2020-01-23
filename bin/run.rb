@@ -11,3 +11,5 @@ puts "__________________________________________________________________________
 
 
 CliInterior.main_menu
+
+#Team.name_to_team("hashinhin")

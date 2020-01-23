@@ -30,7 +30,9 @@ class Player < ActiveRecord::Base
         url = "https://na1.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url))
         data["entries"].each{|enum|
-        Player.create(:summoner_name => enum["summonerName"], :summoner_id => enum["summonerId"])
+            if !(enum["summonerName"].match(/[^A-Za-z0-9 _-]/))  
+                Player.create(:summoner_name => enum["summonerName"], :summoner_id => enum["summonerId"])
+            end
         }
     end
 

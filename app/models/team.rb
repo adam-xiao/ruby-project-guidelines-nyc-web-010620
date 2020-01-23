@@ -24,9 +24,6 @@ class Team < ActiveRecord::Base
         teams.each{|team|
             Team.create(:Player1 => team[0], :Player2 => team[1], :Player3 => team[2], :Player4 => team[3], :Player5 => team[4])
         }
-
-    pp teams
-    puts teams.length 
     end
 
     def self.team_given_id(input) #Given team_id(int), return team members
@@ -105,4 +102,13 @@ class Team < ActiveRecord::Base
         }
         return roster.zip(assigned_champ) # Output https://gyazo.com/9ee337b6284052fc36f383fb2f5507b4
     end
+
+    def self.name_to_team(summonerName)
+        #puts summonerName
+        #puts summonerName.class
+        Team.all.each{|team| puts team[1]}
+        #== summonerName || team["Player2"] == summonerName || team["Player3"] == summonerName || team["Player4"] == summonerName || team["Player5"] == summonerName}#["id"]
+    end
+
+
 end

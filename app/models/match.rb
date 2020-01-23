@@ -33,6 +33,7 @@ class Match < ActiveRecord::Base
         red_weight = 10000 # Used in winrate calculations
         blue_weight = 10000
         puts "________________________________________________________________"
+        puts "Team ID: ##{blue_id}"
         puts "Blue Team: #{blue_roster}"
         puts "Blue Team LP: #{blue_lp} | Avg Per Member: #{blue_lp/5.00}"
         #Puts api fetch here to spread out requests and make data given to user fluid.
@@ -47,6 +48,7 @@ class Match < ActiveRecord::Base
         puts "#{blue_team_lineup[3][0]} has selected #{blue_team_lineup[3][1][0]}, picked in #{blue_team_lineup[3][1][1]}% of their games"
         puts "#{blue_team_lineup[4][0]} has selected #{blue_team_lineup[4][1][0]}, picked in #{blue_team_lineup[4][1][1]}% of their games"
         puts "_______________________________VS_______________________________"
+        puts "Team ID: ##{red_id}"
         puts "Red Team: #{red_roster}"
         puts "Red Team LP: #{red_lp} | Avg Per Member: #{red_lp/5.00}"
          #Puts api fetch here to spread out requests and make data given to user fluid.
@@ -119,7 +121,7 @@ class Match < ActiveRecord::Base
             end
             if ((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100) > 56.5 # Checks if winrate is above 56.5%
                 sleep 1
-               blue_weight -= (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-50)*100
+               red_weight += (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-50)*100
                puts  "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have an abnormally high winrate #{((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100).round(2)}%"
             end
             if ((blue_winrate[3][count].to_f)/(blue_winrate[3][count] + blue_winrate[4][count])*100) < blue_winrate[2] - 3 #Checks if player winrate is below avg by 3%
@@ -129,16 +131,16 @@ class Match < ActiveRecord::Base
               end
               if ((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100) < red_winrate[2] - 3 # Checks if winrate is below avg by 3%
                 sleep 1
-                 blue_weight -= (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-red_winrate[2])*175
+                 red_weight += (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-red_winrate[2])*175
                  puts  "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have a subpar winrate #{((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100).round(2)}% - Comparative to the team (#{red_winrate[2]}%)"
               end
         }
 
-        #puts "___________________________________________"
-        #puts "Final Analysis: "
-        #puts "Blue team has a #{{(blue_weight/(red_weight + blue_weight)*100).round(2)}% chance of winning"
-        #puts "Red team has a #{100 - {(blue_weight/(red_weight + blue_weight)*100).round(2)}% chance of winning"
-        #puts "___________________________________________"
+        puts "___________________________________________"
+        puts "Final Analysis: "
+        puts "Blue team has a #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% chance of winning"
+        puts "Red team has a #{100 - (blue_weight/(red_weight + blue_weight)*100).round(2)}% chance of winning"
+        puts "___________________________________________"
 
        return
         
