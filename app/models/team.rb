@@ -1,4 +1,3 @@
-# require_relative './player.rb'
 class Team < ActiveRecord::Base
     has_many :red_id, foreign_key: :match_id, class_name: "Match"
     has_many :blue_id, through: :red_id
@@ -30,9 +29,5 @@ class Team < ActiveRecord::Base
     #create teams
     #dont reuse players
     #discard remaining players so that we end up with an even number of teams with the most players used
-
-    #array.delete(array.sample(5)).each{|player|
-    #   
-    #}
 
 end
