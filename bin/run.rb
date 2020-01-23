@@ -1,10 +1,20 @@
 require_relative '../config/environment'
 
 
-prompt =  TTY::Prompt.new
+#prompt =  TTY::Prompt.new
+CliInterior.main_menu
 
-prompt.multi_select("What do you want to do?", ["Look up User","opt2","opt3","opt4"])
+puts Match.match_selector(291, 292)
 
-system("#{ENV["API_KEY"]}")
+#pp Team.assign_champs(85)
+# Match.results
 
+
+#["Simulate","Player Info","Team Info","Match Info"])
+
+#system("#{ENV["API_KEY"]}")
+
+#puts Team.total_winrate(30)
+#Team.team_maker
+#Player.all_info("Hashinshin")
 

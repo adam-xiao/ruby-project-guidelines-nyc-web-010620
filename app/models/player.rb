@@ -1,4 +1,4 @@
-require_relative '../../config/environment'
+#require_relative '../../config/environment'
 require 'pp'
 
 class Player < ActiveRecord::Base
@@ -19,6 +19,13 @@ class Player < ActiveRecord::Base
         return data["id"]
     end
 
+    def self.get_accountid(input)
+        cleanse = input.gsub(" ","") #Makes all the spaces in the input, not spaces.
+        url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/#{cleanse}?api_key=#{ENV["API_KEY"]}"
+        data = JSON.parse(RestClient.get(url))
+        return data["accountId"] #Gets account id
+    end
+
     def self.populator #Populates the list of summoners
         url = "https://na1.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url))
@@ -28,17 +35,22 @@ class Player < ActiveRecord::Base
     end
 
     def self.info(input) #Gets Career Wins & Losses, gets winrate also
-        cleanse = input.gsub(" ","")
-        id = Player.get_id(cleanse)
+        id = Player.get_id(input)
         url = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url))
         puts "Season Wins: #{data[0]["wins"]}, Losses: #{data[0]["losses"]}, Winrate: #{(((data[0]["wins"].to_f)/(data[0]["wins"] + data[0]["losses"])) *100).round(2)}%" 
     end
 
 
+    def self.winrate(input) #Gets Career Wins & Losses (used in teams)
+        id = Player.get_id(input)
+        url = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
+        data = JSON.parse(RestClient.get(url))
+        return [data[0]["wins"], data[0]["losses"]]
+    end
+
     def self.most_experienced(input)
-        cleanse = input.gsub(" ","")
-        id = Player.get_id(cleanse)
+        id = Player.get_id(input)
         url = "https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url)) 
         champIDs = data.map{|element| element["championId"]}.take(5) #Takes top 5 most played champions, gets them in champ ID form
@@ -60,27 +72,54 @@ class Player < ActiveRecord::Base
         } 
     end
 
-    def self.rank(input) #Given user, return their league points
-        cleanse = input.gsub(" ","")
-        id = Player.get_id(cleanse)
+    def self.player_most_experienced(input) # Used in teams to find top 3 most played. (Used in teams)
+        id = Player.get_id(input)
+        url = "https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
+        data = JSON.parse(RestClient.get(url)) 
+        champIDs = data.map{|element| element["championId"]}.take(5) #Takes top 5 most played champions, gets them in champ ID form
+        champMast = data.map{|element| element["championPoints"]}.take(5) #Takes top 5 most played champions, get their champion mastery points
+
+        champlist = "http://ddragon.leagueoflegends.com/cdn/6.24.1/data/en_US/champion.json" #Translates champion ID's to champion names
+        champs = JSON.parse(RestClient.get(champlist))
+        allChamps = Hash.new() #Makes a hash used to map their champ ID's to actual champions
+        champs["data"].each{|champ| 
+            allChamps[champ[1]["key"].to_i] = champ[1]["id"]
+        }
+
+        most_played = champIDs.map{|enum| allChamps[enum]} #Outputs champion names
+        
+        results = [input]
+        (0..4).each{|counter| #Example Output "[1, Jax, 2473461]"
+            results << [counter + 1, most_played[counter], champMast[counter]]
+        } 
+        return results #Example Output https://gyazo.com/6ce8ac8a8eb2550967380737adc8353f
+    end
+
+
+
+    def self.rank(input) #Given user, return their rank and league points
+        id = Player.get_id(input)
         url = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url)) 
         return "#{data[0]["tier"].titleize} #{data[0]["rank"]} | LP: #{data[0]["leaguePoints"]}"
     end
 
+    def self.league_points(input) #Given user, return their league points (Used in teams)
+        id = Player.get_id(input)
+        url = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/#{id}?api_key=#{ENV["API_KEY"]}"
+        data = JSON.parse(RestClient.get(url)) 
+        return data[0]["leaguePoints"]
+    end
+
     def self.level(input) #Gets level
-        cleanse = input.gsub(" ","")
-        id = Player.get_id(cleanse)
+        id = Player.get_id(input)
         url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/#{id}?api_key=#{ENV["API_KEY"]}"
         data = JSON.parse(RestClient.get(url))
         return data["summonerLevel"]
     end
 
     def self.match_history(input) #Outputs last 10 matches, and average barons, dragons, inhibs killed
-        cleanse = input.gsub(" ","") #Makes all the spaces in the input, not spaces.
-        url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/#{cleanse}?api_key=#{ENV["API_KEY"]}"
-        data = JSON.parse(RestClient.get(url))
-        acc_id = data["accountId"] #Gets account id
+        acc_id = Player.get_accountid(input)
 
         match_ids = []
         record = []
@@ -114,7 +153,7 @@ class Player < ActiveRecord::Base
         }
 
         puts "--------------------------------"
-        puts "10 Most Recent Games: #{record.count("W")}, Losses: #{record.count("L")}"
+        puts "10 Most Recent Games: Wins: #{record.count("W")}, Losses: #{record.count("L")}"
         puts "#{record}"
         puts "Average Barons Killed: #{barons/10.00}"
         puts "Average Dragons Killed: #{dragons/10.00}"
@@ -139,10 +178,7 @@ class Player < ActiveRecord::Base
     end
 
     def self.plays(input)
-        cleanse = input.gsub(" ","") #Makes all the spaces in the input, not spaces.
-        url = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/#{cleanse}?api_key=#{ENV["API_KEY"]}"
-        data = JSON.parse(RestClient.get(url))
-        acc_id = data["accountId"] #Gets account id
+        acc_id = Player.get_accountid(input) #Gets account id
 
         lanes = Hash.new(0)
         
@@ -161,10 +197,6 @@ class Player < ActiveRecord::Base
                 puts "#{enum[0].to_s.titleize} - #{enum[1].to_s}% Chance"
             end
         }
-        #return "Plays: #{most_played[0].to_s.titleize}, #{most_played[1].to_s}% of the time."
-        #lanes.sort_by{|k, v| v}.reverse.take(1)#[0]
     end
 
 end
-
-pp Player.all_info("S8 is so fun")
