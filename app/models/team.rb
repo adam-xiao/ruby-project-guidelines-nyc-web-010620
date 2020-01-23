@@ -46,10 +46,12 @@ class Team < ActiveRecord::Base
     def self.total_winrate(input) #Given team_id(int), return their Win/Loss & Winrate
         total_wins, total_losses = 0, 0
         roster = Team.team_given_id(input)
-        roster.each{|member| total_wins += Player.winrate(member)[0]} #Gets wins from each member on team
-        roster.each{|member| total_losses += Player.winrate(member)[1]} #Gets losses from each member on team
-        winrate = ((total_wins.to_f)/(total_wins + total_losses) * 100).round(2) #Calculates winrate
-        return [total_wins, total_losses, winrate] #
+        member_wins = []
+        member_losses = []
+        roster.each{|member| member_wins << Player.winrate(member)[0]} #Gets wins from each member on team
+        roster.each{|member| member_losses << Player.winrate(member)[1]} #Gets losses from each member on team
+        winrate = ((member_wins.sum.to_f)/(member_wins.sum + member_losses.sum) * 100).round(2) #Calculates winrate
+        return [member_wins.sum, member_losses.sum, winrate, member_wins, member_losses] #
     end
 
     def self.team_winrate(input) #Given team_id(int), return their Win/Loss & Winrate
@@ -58,7 +60,7 @@ class Team < ActiveRecord::Base
         roster.each{|member| total_wins += Player.winrate(member)[0]} #Gets wins from each member on team
         roster.each{|member| total_losses += Player.winrate(member)[1]} #Gets losses from each member on team
         winrate = ((total_wins.to_f)/(total_wins + total_losses) * 100).round(2) #Calculates winrate
-        return "Team Wins #{total_wins}, Losses: #{total_losses}, Overall Winrate: #{winrate}%"
+        return "Team - Wins: #{total_wins}, Losses: #{total_losses}, Overall Winrate: #{winrate}%"
     end
 
     def self.mains(input) #Given team_id(int), returns each players top 3 most played champions
@@ -103,15 +105,4 @@ class Team < ActiveRecord::Base
         }
         return roster.zip(assigned_champ) # Output https://gyazo.com/9ee337b6284052fc36f383fb2f5507b4
     end
-
-
-
-    #
-
-    #create teams
-    #dont reuse players
-    #discard remaining players so that we end up with an even number of teams with the most players used
-
 end
-
-#Team.team_maker
