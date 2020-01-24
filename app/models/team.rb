@@ -1,4 +1,6 @@
 #require_relative '../../config/environment'
+require "pp"
+require "pry"
 
 class Team < ActiveRecord::Base
     has_many :red_id, foreign_key: :match_id, class_name: "Match"
@@ -33,11 +35,13 @@ class Team < ActiveRecord::Base
         return team_roster
     end
 
-    def self.total_lp(input) #Given team_id(int), return their total LP
-        total = 0
+    def self.total_lp(input) #Given team_id(int), return their total LP #[1LP,2LP,3LP,4LP,5LP,total]
         roster = Team.team_given_id(input) #Finds team, given ID
-        roster.each{|member| total += Player.league_points(member)} #Sums up all their individual LP
-        return total
+        results = []
+        roster.each{|member| results << Player.league_points(member)} #Sums up all their individual LP
+        total = results.sum
+        results << total
+        return results
     end
 
     def self.total_winrate(input) #Given team_id(int), return their Win/Loss & Winrate
@@ -104,10 +108,9 @@ class Team < ActiveRecord::Base
     end
 
     def self.name_to_team(summonerName)
-        #puts summonerName
-        #puts summonerName.class
-        Team.all.each{|team| puts team[1]}
-        #== summonerName || team["Player2"] == summonerName || team["Player3"] == summonerName || team["Player4"] == summonerName || team["Player5"] == summonerName}#["id"]
+        (1..5).each{|i|
+           pp Team.all.select { |team| team["Player#{i}"] == summonerName }#["id"]
+        }
     end
 
 

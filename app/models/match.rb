@@ -35,7 +35,7 @@ class Match < ActiveRecord::Base
         puts "________________________________________________________________"
         puts "Team ID: ##{blue_id}"
         puts "Blue Team: #{blue_roster}"
-        puts "Blue Team LP: #{blue_lp} | Avg Per Member: #{blue_lp/5.00}"
+        puts "Blue Team LP: #{blue_lp[5]} | Avg Per Member: #{blue_lp[5]/5.00}"
         #Puts api fetch here to spread out requests and make data given to user fluid.
         blue_winrate = Team.total_winrate(blue_id)
         puts "Team Wins: #{blue_winrate[0]}, Losses: #{blue_winrate[1]}, Overall Winrate: #{blue_winrate[2]}%"
@@ -49,8 +49,8 @@ class Match < ActiveRecord::Base
         puts "#{blue_team_lineup[4][0]} has selected #{blue_team_lineup[4][1][0]}, picked in #{blue_team_lineup[4][1][1]}% of their games"
         puts "_______________________________VS_______________________________"
         puts "Team ID: ##{red_id}"
-        puts "Red Team: #{red_roster}"
-        puts "Red Team LP: #{red_lp} | Avg Per Member: #{red_lp/5.00}"
+        puts "Red Team: #{red_roster}" #[1LP,2LP,3LP,4LP,5LP,total]
+        puts "Red Team LP: #{red_lp[5]} | Avg Per Member: #{red_lp[5]/5.00}"
          #Puts api fetch here to spread out requests and make data given to user fluid.
         red_winrate = Team.total_winrate(red_id) #[total_wins, total_losses, winrate]
         puts "Team Wins: #{red_winrate[0]}, Losses: #{red_winrate[1]}, Overall Winrate: #{red_winrate[2]}%"
@@ -78,12 +78,12 @@ class Match < ActiveRecord::Base
 
         sleep 1.5
 
-        blue_weight += (blue_lp - red_lp)*1.5
+        blue_weight += (blue_lp[5] - red_lp[5])*1.5
 
-        if blue_lp > red_lp
-            puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: Blue team has higher aggregrate LP (#{blue_lp} Points) than Red (#{red_lp} Points)" 
+        if blue_lp[5] > red_lp[5]
+            puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: Blue team has higher aggregrate LP (#{blue_lp[5]} Points) than Red (#{red_lp[5]} Points)" 
         else
-            puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: Red team has higher aggregrate LP (#{red_lp} Points) than Blue (#{blue_lp} Points)" 
+            puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: Red team has higher aggregrate LP (#{red_lp[5]} Points) than Blue (#{blue_lp[5]} Points)" 
         end
 
         sleep 1.5
@@ -129,12 +129,41 @@ class Match < ActiveRecord::Base
                 blue_weight += (((blue_winrate[3][count].to_f)/(blue_winrate[3][count] + blue_winrate[4][count])*100)-blue_winrate[2])*175
                 puts  "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{blue_roster[count]} (blue) seems to have an a subpar winrate #{((blue_winrate[3][count].to_f)/(blue_winrate[3][count] + blue_winrate[4][count])*100).round(2)}% - Comparative to the team (#{blue_winrate[2]}%)"
               end
-              if ((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100) < red_winrate[2] - 3 # Checks if winrate is below avg by 3%
+            if ((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100) < red_winrate[2] - 3 # Checks if winrate is below avg by 3%
                 sleep 1
-                 red_weight += (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-red_winrate[2])*175
-                 puts  "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have a subpar winrate #{((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100).round(2)}% - Comparative to the team (#{red_winrate[2]}%)"
-              end
+                red_weight += (((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100)-red_winrate[2])*175
+                puts  "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have a subpar winrate #{((red_winrate[3][count].to_f)/(red_winrate[3][count] + red_winrate[4][count])*100).round(2)}% - Comparative to the team (#{red_winrate[2]}%)"
+            end
         }
+
+        (0..4).each{|count| #[1LP,2LP,3LP,4LP,5LP,total]
+            if blue_lp[count] > (red_lp[5]/5)+125#Checks to see if lp is above standard deviation (blue)
+                sleep 1
+                blue_weight += (blue_lp[count] - (red_lp[5]/5)-70)*2.75
+                puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{blue_roster[count]} (blue) seems to have a higher than rank (#{blue_lp[count]} LP) - Comparative to the blue team average (#{red_lp[5]/5} LP)"
+            end
+
+            if red_lp[count] > (blue_lp[5]/5)+125#Checks to see if lp is above standard deviation (red)
+                sleep 1
+                red_weight += (red_lp[count] - (blue_lp[5]/5)-70)*2.75
+                puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have a higher rank (#{red_lp[count]} LP) - Comparative to the blue team average (#{blue_lp[5]/5} LP)"
+            end
+
+            if blue_lp[count] < (red_lp[5]/5)-125#Checks to see if lp is below standard deviation (blue)
+                sleep 1
+                blue_weight += (blue_lp[count] - (red_lp[5]/5)+25)*1.75
+                puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{blue_roster[count]} (blue) seems to have a lower than rank (#{blue_lp[count]} LP) - Comparative to the blue team average (#{red_lp[5]/5} LP)"
+            end
+
+            if red_lp[count] < (blue_lp[5]/5)-125#Checks to see if lp is below standard deviation (red)
+                sleep 1
+                red_weight += (red_lp[count] - (blue_lp[5]/5)+25)*1.75
+                puts "Winrate: #{(blue_weight/(red_weight + blue_weight)*100).round(2)}% - Adjusted for: #{red_roster[count]} (red) seems to have a lower than rank (#{red_lp[count]} LP) - Comparative to the blue team average (#{blue_lp[5]/5} LP)"
+            end
+    
+        }
+
+
 
         puts "___________________________________________"
         puts "Final Analysis: "
